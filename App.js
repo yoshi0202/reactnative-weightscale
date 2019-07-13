@@ -6,11 +6,13 @@ import {
   View,
   Image
 } from 'react-native';
-import { ImagePicker } from 'expo';
+import * as ImagePicker from 'expo-image-picker'
 import Amplify, { Storage } from 'aws-amplify';
 import awsmobile from './aws-exports';
+import { withAuthenticator } from 'aws-amplify-react-native'
 Amplify.configure(awsmobile);
 window.LOG_LEVEL='DEBUG'
+
 
 export default class App extends Component {
   state = {
@@ -23,13 +25,22 @@ export default class App extends Component {
   }
   async _camera () { // ...(6)
 	let result = await ImagePicker.launchCameraAsync();
+	// if(!result.cancelled) {
+	// 	console.log(result);
+	// 	console.log("Take fin");
+	// 	Storage.put(result.uri, 'Hello', {
+	// 		level: 'public',
+	// 		contentType : 'image/jpeg' }
+	// 	)
+	// 	.then(result => console.log(result))
+	// 	.catch(err => console.log(err));
 	console.log(result.uri);
 	if (!result.cancelled) {
 		Storage.put(result.uri, 'Hello', {
-			metadata: { "Content-Type" : 'image/jpeg' },
+			contentType : 'image/jpeg'
 		})
-			.then(result => console.log(result))
-			.catch(err => console.log(err));
+		.then(result => console.log(result))
+		.catch(err => console.log(err));
 	}
   };
 
