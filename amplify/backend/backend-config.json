@@ -1,0 +1,14 @@
+{
+	"auth": {
+		"amplifytest0ccf9570": {
+			"service": "Cognito",
+			"providerPlugin": "awscloudformation"
+		}
+	},
+	"storage": {
+		"s35bf83ed5": {
+			"service": "S3",
+			"providerPlugin": "awscloudformation"
+		}
+	}
+}

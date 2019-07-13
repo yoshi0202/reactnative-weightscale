@@ -1,0 +1,59 @@
+{
+    "identityPoolName": "amplifytest0ccf9570_identitypool_0ccf9570",
+    "allowUnauthenticatedIdentities": true,
+    "openIdLambdaRoleName": "amplif0ccf9570_openid_lambda_role",
+    "resourceNameTruncated": "amplif0ccf9570",
+    "userPoolName": "amplifytest0ccf9570_userpool_0ccf9570",
+    "autoVerifiedAttributes": [
+        "email"
+    ],
+    "mfaConfiguration": "OFF",
+    "mfaTypes": [
+        "SMS Text Message"
+    ],
+    "smsAuthenticationMessage": "Your authentication code is {####}",
+    "smsVerificationMessage": "Your verification code is {####}",
+    "emailVerificationSubject": "Your verification code",
+    "emailVerificationMessage": "Your verification code is {####}",
+    "defaultPasswordPolicy": false,
+    "passwordPolicyMinLength": 8,
+    "passwordPolicyCharacters": [],
+    "requiredAttributes": [
+        "email"
+    ],
+    "userpoolClientName": "amplif0ccf9570_app_client",
+    "userpoolClientGenerateSecret": true,
+    "userpoolClientRefreshTokenValidity": 30,
+    "userpoolClientWriteAttributes": [
+        "email"
+    ],
+    "userpoolClientReadAttributes": [
+        "email"
+    ],
+    "mfaLambdaRole": "amplif0ccf9570_totp_lambda_role",
+    "userpoolClientLambdaRole": "amplif0ccf9570_userpoolclient_lambda_role",
+    "userpoolClientSetAttributes": false,
+    "resourceName": "amplifytest0ccf9570",
+    "authSelections": "identityPoolAndUserPool",
+    "authRoleName": {
+        "Ref": "AuthRoleName"
+    },
+    "unauthRoleName": {
+        "Ref": "UnauthRoleName"
+    },
+    "authRoleArn": {
+        "Fn::GetAtt": [
+            "AuthRole",
+            "Arn"
+        ]
+    },
+    "unauthRoleArn": {
+        "Fn::GetAtt": [
+            "UnauthRole",
+            "Arn"
+        ]
+    },
+    "useDefault": "default",
+    "additionalQuestions": [],
+    "dependsOn": []
+}
