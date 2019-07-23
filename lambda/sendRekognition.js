@@ -4,6 +4,7 @@ var rekognition = new AWS.Rekognition();
 var s3 = new AWS.S3();
 
 exports.handler = async event => {
+    console.log(event);
     var response = {};
     try {
         console.log("start");
@@ -12,7 +13,7 @@ exports.handler = async event => {
             Image: {
                 S3Object: {
                     Bucket: "amplifytest2e0cab15d940c4b95bbc35a87b16b6d88-dev",
-                    Name: "image.png"
+                    Name: "image.jpg"
                 }
             }
         };

@@ -42,9 +42,13 @@ export default class App extends Component {
         // ...(6)
         let result = await ImagePicker.launchCameraAsync();
         if (!result.cancelled) {
-            console.log(result);
+            //配列形式に変換して最後を取得
+            let fileName = result.uri.split("/").pop();
+            //拡張子を取得
+            let fileNameExt = fileName.split(".").pop();
+            console.log("fileName:" + fileName);
+            console.log("fileNameExt:" + fileNameExt);
             const options = {
-                // keyPrefix: "uploads/",
                 keyPrefix: "",
                 bucket: awsConfig.bucket,
                 region: awsConfig.region,
@@ -53,18 +57,25 @@ export default class App extends Component {
                 successActionStatus: 201
             };
             const file = {
-                // uri can also be a file system path (i.e. file://)
                 uri: result.uri,
-                name: "image.png",
-                type: "image/png"
+                //name: fileName,
+                name: "image.jpg",
+                type: "image/" + fileNameExt
             };
+            console.log("file:" + file.type);
             RNS3.put(file, options).then(async function(response) {
                 if (response.status !== 201) {
-                    console.log(response);
                     throw new Error("Failed to upload image to S3");
                 }
                 console.log("put fin");
-                fetch(awsConfig.rekognitionUrl)
+
+                let url =
+                    awsConfig.rekognitionUrl +
+                    "/?filename=" +
+                    file.name +
+                    "&type=" +
+                    fileNameExt;
+                fetch(url)
                     .then(response => response.json())
                     .then(responseJson => {
                         console.log("detect fin");
