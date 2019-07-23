@@ -13,10 +13,11 @@ exports.handler = async event => {
             Image: {
                 S3Object: {
                     Bucket: "amplifytest2e0cab15d940c4b95bbc35a87b16b6d88-dev",
-                    Name: "image.jpg"
+                    Name: event.filename
                 }
             }
         };
+        console.log("params:" + JSON.stringify(params));
         const data = await rekognition.detectText(params).promise();
         response.body = data;
         response.statuscode = 200;
