@@ -1,7 +1,6 @@
 var AWS = require("aws-sdk");
 AWS.region = "ap-northeast-1";
 var rekognition = new AWS.Rekognition();
-var s3 = new AWS.S3();
 
 exports.handler = async event => {
     console.log(event);
@@ -15,10 +14,12 @@ exports.handler = async event => {
                     Bucket: "amplifytest2e0cab15d940c4b95bbc35a87b16b6d88-dev",
                     Name: event.filename
                 }
-            }
+            },
+            MaxLabels: 10,
+            MinConfidence: 90
         };
         console.log("params:" + JSON.stringify(params));
-        const data = await rekognition.detectText(params).promise();
+        const data = await rekognition.detectLabels(params).promise();
         response.body = data;
         response.statuscode = 200;
         return response;

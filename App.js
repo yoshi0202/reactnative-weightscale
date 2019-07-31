@@ -7,39 +7,8 @@ import awsConfig from "./awsConfig";
 window.LOG_LEVEL = "DEBUG";
 
 export default class App extends Component {
-    state = {
-        url: ""
-    };
-    async _functionTest() {
-        let result = await fetch(awsConfig.rekognitionUrl);
-        Alert.alert(
-            "Alert Title",
-            "My Alert Msg",
-            [
-                {
-                    text: result,
-                    onPress: () => console.log("Ask me later pressed")
-                },
-                {
-                    text: "Cancel",
-                    onPress: () => console.log("Cancel Pressed"),
-                    style: "cancel"
-                },
-                { text: "OK", onPress: () => console.log("OK Pressed") }
-            ],
-            { cancelable: false }
-        );
-    }
-    _functionWrapper() {
-        return "hogehoge!";
-    }
-    async _getFile(filepath) {
-        Storage.put(filepath)
-            .then(result => console.log(result))
-            .catch(err => console.log(err));
-    }
     async _camera() {
-        // ...(6)
+        let noodleFlg = false;
         let result = await ImagePicker.launchCameraAsync();
         if (!result.cancelled) {
             //配列形式に変換して最後を取得
@@ -58,11 +27,9 @@ export default class App extends Component {
             };
             const file = {
                 uri: result.uri,
-                //name: fileName,
-                name: "image.jpg",
+                name: fileName,
                 type: "image/" + fileNameExt
             };
-            console.log("file:" + file.type);
             RNS3.put(file, options).then(async function(response) {
                 if (response.status !== 201) {
                     throw new Error("Failed to upload image to S3");
@@ -78,8 +45,20 @@ export default class App extends Component {
                 fetch(url)
                     .then(response => response.json())
                     .then(responseJson => {
+                        let result = responseJson.body.Labels;
+                        result.forEach(function(data) {
+                            console.log("Confidence:" + data.Confidence);
+                            console.log("Name:" + data.Name);
+                            if (data.Name === "Noodle") {
+                                noodleFlg = true;
+                            }
+                        });
+                        if (noodleFlg) {
+                            Alert.alert("判別結果", "ラーメン注意");
+                        } else {
+                            Alert.alert("判別結果", "食べていいよ");
+                        }
                         console.log("detect fin");
-                        console.log(responseJson);
                     })
                     .catch(error => {
                         console.error(error);
@@ -87,18 +66,86 @@ export default class App extends Component {
             });
         }
     }
+    async _getFile() {
+        try {
+            let options = {
+                mediaTypes: ImagePicker.MediaTypeOptions.All
+            };
+            let noodleFlg = false;
+            let result = await ImagePicker.launchImageLibraryAsync(options);
+            if (!result.cancelled) {
+                console.log(result);
+                //配列形式に変換して最後を取得
+                let fileName = result.uri.split("/").pop();
+                //拡張子を取得
+                let fileNameExt = fileName.split(".").pop();
+                console.log("fileName:" + fileName);
+                console.log("fileNameExt:" + fileNameExt);
+                const options = {
+                    keyPrefix: "",
+                    bucket: awsConfig.bucket,
+                    region: awsConfig.region,
+                    accessKey: awsConfig.accessKey,
+                    secretKey: awsConfig.secretKey,
+                    successActionStatus: 201
+                };
+                const file = {
+                    uri: result.uri,
+                    name: fileName,
+                    type: "image/" + fileNameExt
+                };
+                RNS3.put(file, options).then(async function(response) {
+                    if (response.status !== 201) {
+                        throw new Error("Failed to upload image to S3");
+                    }
+                    console.log("put fin");
+
+                    let url =
+                        awsConfig.rekognitionUrl +
+                        "/?filename=" +
+                        file.name +
+                        "&type=" +
+                        fileNameExt;
+                    fetch(url)
+                        .then(response => response.json())
+                        .then(responseJson => {
+                            let result = responseJson.body.Labels;
+                            result.forEach(function(data) {
+                                console.log("Confidence:" + data.Confidence);
+                                console.log("Name:" + data.Name);
+                                if (data.Name === "Noodle") {
+                                    noodleFlg = true;
+                                }
+                            });
+                            if (noodleFlg) {
+                                Alert.alert("判別結果", "ラーメン注意");
+                            } else {
+                                Alert.alert("判別結果", "食べていいよ");
+                            }
+                        })
+                        .catch(error => {
+                            console.error(error);
+                        });
+                });
+            } else {
+                console.log(result);
+            }
+        } catch (error) {
+            console.log(error);
+        }
+    }
 
     render() {
         return (
             <View style={styles.container}>
-                <Text>Storage</Text>
-                <Button title="Get Image" onPress={this._camera} />
-                {this.state.url !== "" && (
-                    <Image
-                        source={{ uri: this.state.url }}
-                        style={{ width: 300, height: 300 }}
-                    />
-                )}
+                {/* <Text>Take a Picture</Text>
+                <Button title="Take a Picture" onPress={this._camera} /> */}
+                <Text>SelectPictures</Text>
+                <Button
+                    title="Select Image"
+                    style={styles.button}
+                    onPress={this._getFile}
+                />
             </View>
         );
     }
@@ -109,5 +156,12 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: "center",
         alignItems: "center"
+    },
+    button: {
+        height: 100,
+        width: 200,
+        padding: 10,
+        backgroundColor: "#FFFFFF",
+        margin: 3
     }
 });
