@@ -1,5 +1,13 @@
 import React, { Component } from "react";
-import { StyleSheet, Text, Button, View, Image, Alert } from "react-native";
+import {
+    StyleSheet,
+    Text,
+    Button,
+    View,
+    Image,
+    Alert,
+    TouchableOpacity
+} from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { RNS3 } from "react-native-aws3";
 import awsConfig from "./awsConfig";
@@ -7,16 +15,14 @@ import awsConfig from "./awsConfig";
 window.LOG_LEVEL = "DEBUG";
 
 export default class App extends Component {
-    async _camera() {
-        let noodleFlg = false;
-        let result = await ImagePicker.launchCameraAsync();
-        if (!result.cancelled) {
-            //配列形式に変換して最後を取得
-            let fileName = result.uri.split("/").pop();
-            //拡張子を取得
-            let fileNameExt = fileName.split(".").pop();
-            console.log("fileName:" + fileName);
-            console.log("fileNameExt:" + fileNameExt);
+    constructor(props) {
+        super(props);
+        this.state = {
+            result: ""
+        };
+    }
+    _putS3 = async (filePath, params) => {
+        return new Promise(function(res, rej) {
             const options = {
                 keyPrefix: "",
                 bucket: awsConfig.bucket,
@@ -26,142 +32,171 @@ export default class App extends Component {
                 successActionStatus: 201
             };
             const file = {
-                uri: result.uri,
-                name: fileName,
-                type: "image/" + fileNameExt
+                uri: filePath,
+                name: params.fileName,
+                type: "image/" + params.fileNameExt
             };
             RNS3.put(file, options).then(async function(response) {
                 if (response.status !== 201) {
-                    throw new Error("Failed to upload image to S3");
+                    rej("Failed to upload image to S3");
                 }
                 console.log("put fin");
-
-                let url =
-                    awsConfig.rekognitionUrl +
-                    "/?filename=" +
-                    file.name +
-                    "&type=" +
-                    fileNameExt;
-                fetch(url)
-                    .then(response => response.json())
-                    .then(responseJson => {
-                        let result = responseJson.body.Labels;
-                        result.forEach(function(data) {
-                            console.log("Confidence:" + data.Confidence);
-                            console.log("Name:" + data.Name);
-                            if (data.Name === "Noodle") {
-                                noodleFlg = true;
-                            }
-                        });
-                        if (noodleFlg) {
-                            Alert.alert("判別結果", "ラーメン注意");
-                        } else {
-                            Alert.alert("判別結果", "食べていいよ");
+                res("");
+            });
+        });
+    };
+    _requestRekognition = params => {
+        let noodleFlg = false;
+        let url =
+            awsConfig.rekognitionUrl +
+            "/?filename=" +
+            params.fileName +
+            "&type=" +
+            params.fileNameExt;
+        return new Promise(function(res, rej) {
+            fetch(url)
+                .then(response => response.json())
+                .then(responseJson => {
+                    let result = responseJson.body.Labels;
+                    result.forEach(function(data) {
+                        console.log("Confidence:" + data.Confidence);
+                        console.log("Name:" + data.Name);
+                        if (data.Name === "Noodle") {
+                            noodleFlg = true;
                         }
-                        console.log("detect fin");
-                    })
-                    .catch(error => {
-                        console.error(error);
                     });
+                    console.log("detect fin");
+                    res(noodleFlg);
+                })
+                .catch(error => {
+                    rej(error);
+                });
+        });
+    };
+    _parseFileName = param => {
+        //配列形式に変換して最後を取得
+        let fileName = param.uri.split("/").pop();
+        //拡張子を取得
+        let fileNameExt = fileName.split(".").pop();
+        let parseParams = {
+            fileName: fileName,
+            fileNameExt: fileNameExt
+        };
+        console.log(parseParams);
+        return parseParams;
+    };
+    _checkNoodle = async result => {
+        let fileParams = this._parseFileName(result);
+        await this._putS3(result.uri, fileParams);
+        let isNoodle = await this._requestRekognition(fileParams);
+        if (isNoodle) {
+            Alert.alert("判別結果", "ラーメン注意");
+            this.setState(function(data) {
+                return {
+                    resutl: "これはラーメンです"
+                };
+            });
+        } else {
+            Alert.alert("判別結果", "食べていいよ");
+            this.setState(function(data) {
+                return {
+                    resutl: "これはラーメンではありません"
+                };
             });
         }
-    }
-    async _getFile() {
+    };
+    _launchCamera = async () => {
+        try {
+            let result = await ImagePicker.launchCameraAsync();
+            if (!result.cancelled) {
+                this._checkNoodle(result);
+            } else {
+                console.log(error);
+            }
+        } catch (error) {
+            console.log(error);
+        }
+    };
+    _getFile = async () => {
         try {
             let options = {
                 mediaTypes: ImagePicker.MediaTypeOptions.All
             };
-            let noodleFlg = false;
             let result = await ImagePicker.launchImageLibraryAsync(options);
             if (!result.cancelled) {
-                console.log(result);
-                //配列形式に変換して最後を取得
-                let fileName = result.uri.split("/").pop();
-                //拡張子を取得
-                let fileNameExt = fileName.split(".").pop();
-                console.log("fileName:" + fileName);
-                console.log("fileNameExt:" + fileNameExt);
-                const options = {
-                    keyPrefix: "",
-                    bucket: awsConfig.bucket,
-                    region: awsConfig.region,
-                    accessKey: awsConfig.accessKey,
-                    secretKey: awsConfig.secretKey,
-                    successActionStatus: 201
-                };
-                const file = {
-                    uri: result.uri,
-                    name: fileName,
-                    type: "image/" + fileNameExt
-                };
-                RNS3.put(file, options).then(async function(response) {
-                    if (response.status !== 201) {
-                        throw new Error("Failed to upload image to S3");
-                    }
-                    console.log("put fin");
-
-                    let url =
-                        awsConfig.rekognitionUrl +
-                        "/?filename=" +
-                        file.name +
-                        "&type=" +
-                        fileNameExt;
-                    fetch(url)
-                        .then(response => response.json())
-                        .then(responseJson => {
-                            let result = responseJson.body.Labels;
-                            result.forEach(function(data) {
-                                console.log("Confidence:" + data.Confidence);
-                                console.log("Name:" + data.Name);
-                                if (data.Name === "Noodle") {
-                                    noodleFlg = true;
-                                }
-                            });
-                            if (noodleFlg) {
-                                Alert.alert("判別結果", "ラーメン注意");
-                            } else {
-                                Alert.alert("判別結果", "食べていいよ");
-                            }
-                        })
-                        .catch(error => {
-                            console.error(error);
-                        });
-                });
+                this._checkNoodle(result);
             } else {
                 console.log(result);
             }
         } catch (error) {
             console.log(error);
         }
-    }
+    };
 
     render() {
+        let resulttxt = this.state.result ? this.props.text : " ";
         return (
             <View style={styles.container}>
-                {/* <Text>Take a Picture</Text>
-                <Button title="Take a Picture" onPress={this._camera} /> */}
-                <Text>SelectPictures</Text>
-                <Button
-                    title="Select Image"
-                    style={styles.button}
-                    onPress={this._getFile}
-                />
+                <View style={styles.textContainer}>
+                    <Text style={styles.title}>ラーメン判定機</Text>
+                </View>
+                <View style={styles.buttonContainer}>
+                    <TouchableOpacity
+                        onPress={this._getFile}
+                        style={styles.button}
+                    >
+                        <Text>画像を選択する</Text>
+                    </TouchableOpacity>
+                </View>
+                <View style={styles.buttonContainer}>
+                    <TouchableOpacity
+                        onPress={this._launchCamera}
+                        style={styles.button}
+                    >
+                        <Text>写真を撮影する</Text>
+                    </TouchableOpacity>
+                </View>
+                <View style={styles.resultContainer} />
+                <Text>{resulttxt}</Text>
             </View>
         );
     }
 }
-
 const styles = StyleSheet.create({
     container: {
         flex: 1,
+        backgroundColor: "#FFFFFF"
+    },
+    textContainer: {
+        marginTop: 100,
+        marginBottom: 50,
+        alignItems: "center",
+        backgroundColor: "red"
+    },
+    title: {
+        fontSize: 40
+    },
+    buttonContainer: {
+        flex: 0.4,
+        margin: 50,
+        alignItems: "center",
         justifyContent: "center",
-        alignItems: "center"
+        backgroundColor: "blue"
+    },
+    resultContainer: {
+        flex: 0.2,
+        alignItems: "center",
+        justifyContent: "center",
+        backgroundColor: "green"
     },
     button: {
+        width: 250,
         height: 100,
-        width: 200,
         padding: 10,
-        backgroundColor: "#FFFFFF",
+        borderRadius: 10,
+        backgroundColor: "lightgray",
+        alignItems: "center",
+        justifyContent: "center",
         margin: 3
     }
 });
