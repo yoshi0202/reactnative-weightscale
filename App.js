@@ -1,5 +1,13 @@
 import React, { Component } from "react";
-import { StyleSheet, Text, Button, View, Image, Alert } from "react-native";
+import {
+    StyleSheet,
+    Text,
+    Button,
+    View,
+    Image,
+    Alert,
+    TouchableOpacity
+} from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { RNS3 } from "react-native-aws3";
 import awsConfig from "./awsConfig";
@@ -138,30 +146,65 @@ export default class App extends Component {
     render() {
         return (
             <View style={styles.container}>
-                {/* <Text>Take a Picture</Text>
-                <Button title="Take a Picture" onPress={this._camera} /> */}
-                <Text>SelectPictures</Text>
-                <Button
-                    title="Select Image"
-                    style={styles.button}
-                    onPress={this._getFile}
-                />
+                <View style={styles.textContainer}>
+                    <Text style={styles.title}>ラーメン判定機</Text>
+                </View>
+                <View style={styles.buttonContainer}>
+                    <TouchableOpacity
+                        onPress={this._getFile}
+                        style={styles.button}
+                    >
+                        <Text>画像を選択する</Text>
+                    </TouchableOpacity>
+                </View>
+                <View style={styles.buttonContainer}>
+                    <TouchableOpacity
+                        onPress={this._camera}
+                        style={styles.button}
+                    >
+                        <Text>写真を撮影する</Text>
+                    </TouchableOpacity>
+                </View>
+                <View style={styles.resultContainer} />
             </View>
         );
     }
 }
-
 const styles = StyleSheet.create({
     container: {
         flex: 1,
+        backgroundColor: "#FFFFFF"
+    },
+    textContainer: {
+        marginTop: 100,
+        marginBottom: 50,
+        alignItems: "center",
+        backgroundColor: "red"
+    },
+    title: {
+        fontSize: 40
+    },
+    buttonContainer: {
+        flex: 0.4,
+        margin: 50,
+        alignItems: "center",
         justifyContent: "center",
-        alignItems: "center"
+        backgroundColor: "blue"
+    },
+    resultContainer: {
+        flex: 0.2,
+        alignItems: "center",
+        justifyContent: "center",
+        backgroundColor: "green"
     },
     button: {
+        width: 250,
         height: 100,
-        width: 200,
         padding: 10,
-        backgroundColor: "#FFFFFF",
+        borderRadius: 10,
+        backgroundColor: "lightgray",
+        alignItems: "center",
+        justifyContent: "center",
         margin: 3
     }
 });
