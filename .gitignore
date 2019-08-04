@@ -9,6 +9,7 @@ npm-debug.*
 web-build/
 web-report/
 
+.DS_Store
 #amplify
 amplify/
 build/
