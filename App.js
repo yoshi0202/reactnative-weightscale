@@ -91,17 +91,13 @@ export default class App extends Component {
         let isNoodle = await this._requestRekognition(fileParams);
         if (isNoodle) {
             Alert.alert("判別結果", "ラーメン注意");
-            this.setState(function(data) {
-                return {
-                    resutl: "これはラーメンです"
-                };
+            this.setState({
+                result: "これはラーメンです"
             });
         } else {
             Alert.alert("判別結果", "食べていいよ");
-            this.setState(function(data) {
-                return {
-                    resutl: "これはラーメンではありません"
-                };
+            this.setState({
+                result: "これはラーメンではありません"
             });
         }
     };
@@ -124,6 +120,7 @@ export default class App extends Component {
             };
             let result = await ImagePicker.launchImageLibraryAsync(options);
             if (!result.cancelled) {
+                console.log(result);
                 this._checkNoodle(result);
             } else {
                 console.log(result);
@@ -134,11 +131,14 @@ export default class App extends Component {
     };
 
     render() {
-        let resulttxt = this.state.result ? this.props.text : " ";
         return (
             <View style={styles.container}>
                 <View style={styles.textContainer}>
                     <Text style={styles.title}>ラーメン判定機</Text>
+                    <Image
+                        style={{ width: 150, height: 150, marginTop: 20 }}
+                        source={require("./assets/20181017193448.jpg")}
+                    />
                 </View>
                 <View style={styles.buttonContainer}>
                     <TouchableOpacity
@@ -156,8 +156,9 @@ export default class App extends Component {
                         <Text>写真を撮影する</Text>
                     </TouchableOpacity>
                 </View>
-                <View style={styles.resultContainer} />
-                <Text>{resulttxt}</Text>
+                <View style={styles.resultContainer}>
+                    <Text style={styles.resultText}>{this.state.result}</Text>
+                </View>
             </View>
         );
     }
@@ -170,28 +171,32 @@ const styles = StyleSheet.create({
     textContainer: {
         marginTop: 100,
         marginBottom: 50,
-        alignItems: "center",
-        backgroundColor: "red"
+        alignItems: "center"
+        // backgroundColor: "red"
     },
     title: {
         fontSize: 40
     },
     buttonContainer: {
         flex: 0.4,
-        margin: 50,
+        margin: 20,
         alignItems: "center",
-        justifyContent: "center",
-        backgroundColor: "blue"
+        justifyContent: "center"
+        // backgroundColor: "blue"
     },
     resultContainer: {
         flex: 0.2,
         alignItems: "center",
-        justifyContent: "center",
-        backgroundColor: "green"
+        justifyContent: "center"
+        // backgroundColor: "green"
+    },
+    resultText: {
+        fontSize: 20,
+        color: "red"
     },
     button: {
         width: 250,
-        height: 100,
+        height: 50,
         padding: 10,
         borderRadius: 10,
         backgroundColor: "lightgray",
